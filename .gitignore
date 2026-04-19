@@ -1,7 +1,7 @@
 venv/
 .env
 .DS_Store
-# DESIGN.docx
+\# DESIGN.docx
 EnterpriseRAG_PRD.docx
 __pycache__/
 *.pyc
