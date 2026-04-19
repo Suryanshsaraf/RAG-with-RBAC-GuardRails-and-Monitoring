@@ -1,0 +1,7 @@
+venv/
+.env
+.DS_Store
+# DESIGN.docx
+EnterpriseRAG_PRD.docx
+__pycache__/
+*.pyc
