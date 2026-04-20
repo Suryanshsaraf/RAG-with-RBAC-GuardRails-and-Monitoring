@@ -24,7 +24,15 @@ interface Message {
   guardrail_triggered?: boolean;
 }
 
-export const Chat: React.FC = () => {
+interface ChatProps {
+  settings: {
+    topK: number;
+    useHyde: boolean;
+    multiQuery: boolean;
+  };
+}
+
+export const Chat: React.FC<ChatProps> = ({ settings }) => {
   const [messages, setMessages] = useState<Message[]>([{
     id: 'welcome',
     role: 'assistant',
@@ -52,7 +60,12 @@ export const Chat: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await apiService.query(userMsg.content);
+      const res = await apiService.query(
+        userMsg.content, 
+        settings.topK, 
+        settings.useHyde, 
+        settings.multiQuery
+      );
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',

@@ -20,6 +20,11 @@ function App() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'guardrails' | 'settings'>('chat');
+  const [ragSettings, setRagSettings] = useState({
+    topK: 5,
+    useHyde: false,
+    multiQuery: false
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -72,7 +77,7 @@ function App() {
         </header>
         
         <div className="flex-1 overflow-hidden relative">
-          {activeTab === 'chat' && <Chat />}
+          {activeTab === 'chat' && <Chat settings={ragSettings} />}
           {activeTab === 'guardrails' && (
             <div className="p-8 max-w-4xl mx-auto space-y-6">
               <h2 className="text-2xl font-bold">Guardrails Configuration</h2>
@@ -101,25 +106,66 @@ function App() {
           )}
           {activeTab === 'settings' && (
             <div className="p-8 max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold mb-6">User Settings</h2>
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 divide-y divide-zinc-800">
-                <div className="py-4 flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">Dark Mode</p>
-                    <p className="text-xs text-zinc-500">Always active for focus</p>
+              <h2 className="text-2xl font-bold mb-6">RAG Configuration</h2>
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8 space-y-8">
+                {/* Top K */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <label className="font-medium">Top K Chunks</label>
+                    <span className="px-3 py-1 bg-brand-600/20 text-brand-400 rounded-full font-bold">{ragSettings.topK}</span>
                   </div>
-                  <div className="w-12 h-6 rounded-full bg-brand-600 p-1">
-                    <div className="w-4 h-4 rounded-full bg-white ml-auto" />
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="20" 
+                    value={ragSettings.topK}
+                    onChange={(e) => setRagSettings(prev => ({ ...prev, topK: parseInt(e.target.value) }))}
+                    className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-zinc-500 mt-2 uppercase tracking-widest">
+                    <span>Precision</span>
+                    <span>Recall</span>
                   </div>
                 </div>
-                <div className="py-4 flex justify-between items-center">
+
+                {/* HyDE */}
+                <div className="flex justify-between items-center py-4 border-t border-zinc-800">
                   <div>
-                    <p className="font-medium">Auto-Ingest</p>
-                    <p className="text-xs text-zinc-500">Index files immediately upon upload</p>
+                    <p className="font-medium">HyDE Expansion</p>
+                    <p className="text-xs text-zinc-500">Hypothetical Document Embeddings for better retrieval</p>
                   </div>
-                  <div className="w-12 h-6 rounded-full bg-brand-600 p-1">
-                    <div className="w-4 h-4 rounded-full bg-white ml-auto" />
+                  <button 
+                    onClick={() => setRagSettings(prev => ({ ...prev, useHyde: !prev.useHyde }))}
+                    className={cn(
+                      "w-12 h-6 rounded-full transition-colors relative p-1",
+                      ragSettings.useHyde ? "bg-brand-600" : "bg-zinc-800"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-4 h-4 rounded-full bg-white transition-transform",
+                      ragSettings.useHyde ? "translate-x-6" : "translate-x-0"
+                    )} />
+                  </button>
+                </div>
+
+                {/* Multi-Query */}
+                <div className="flex justify-between items-center py-4 border-t border-zinc-800">
+                  <div>
+                    <p className="font-medium">Multi-Query Retrieval</p>
+                    <p className="text-xs text-zinc-500">Generate multiple search queries for broader context</p>
                   </div>
+                  <button 
+                    onClick={() => setRagSettings(prev => ({ ...prev, multiQuery: !prev.multiQuery }))}
+                    className={cn(
+                      "w-12 h-6 rounded-full transition-colors relative p-1",
+                      ragSettings.multiQuery ? "bg-brand-600" : "bg-zinc-800"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-4 h-4 rounded-full bg-white transition-transform",
+                      ragSettings.multiQuery ? "translate-x-6" : "translate-x-0"
+                    )} />
+                  </button>
                 </div>
               </div>
             </div>
