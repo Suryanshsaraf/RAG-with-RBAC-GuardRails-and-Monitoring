@@ -20,3 +20,6 @@ pytest
 requests
 fastembed
 nemoguardrails
+presidio-analyzer
+presidio-anonymizer
+spacy
