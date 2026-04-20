@@ -6,8 +6,8 @@ import type { UserInfo } from '../App';
 
 interface SidebarProps {
   user: UserInfo | null;
-  activeTab: 'chat' | 'guardrails' | 'settings';
-  setActiveTab: (tab: 'chat' | 'guardrails' | 'settings') => void;
+  activeTab: 'chat' | 'documents' | 'guardrails' | 'settings';
+  setActiveTab: (tab: 'chat' | 'documents' | 'guardrails' | 'settings') => void;
   onLogout: () => void;
   isMobileOpen: boolean;
   setIsMobileOpen: (open: boolean) => void;
@@ -56,6 +56,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, setActiveTab,
           >
             <FileText size={18} />
             <span>Chat Session</span>
+          </button>
+          <button 
+            onClick={() => { setActiveTab('documents'); setIsMobileOpen(false); }}
+            className={cn(
+              "w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all",
+              activeTab === 'documents' ? "bg-brand-600 text-white shadow-lg shadow-brand-500/20" : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+            )}
+          >
+            <UploadCloud size={18} />
+            <span>Documents</span>
           </button>
           <button 
             onClick={() => { setActiveTab('guardrails'); setIsMobileOpen(false); }}

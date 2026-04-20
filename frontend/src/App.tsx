@@ -22,7 +22,7 @@ function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'guardrails' | 'settings'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'documents' | 'guardrails' | 'settings'>('chat');
   const [ragSettings, setRagSettings] = useState({
     topK: 5,
     useHyde: false,
@@ -115,6 +115,135 @@ function App() {
         
         <div className="flex-1 overflow-hidden relative">
           {activeTab === 'chat' && <Chat settings={ragSettings} />}
+          {activeTab === 'documents' && (
+            <div className="p-8 max-w-5xl mx-auto space-y-10">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">Knowledge Base</h2>
+                  <p className="text-zinc-500">Manage and index your enterprise documents.</p>
+                </div>
+                <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-brand-500 bg-brand-500/10 px-3 py-1 rounded-full">
+                  <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                  <span>System Online</span>
+                </div>
+              </div>
+
+              {/* Upload Zone */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="aspect-[21/9] border-2 border-dashed border-zinc-800 rounded-[32px] flex flex-col items-center justify-center bg-zinc-900/20 hover:bg-zinc-900/40 hover:border-brand-500/50 transition-all cursor-pointer group">
+                    <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <UploadCloud size={32} className="text-zinc-500 group-hover:text-brand-500" />
+                    </div>
+                    <p className="font-bold text-zinc-300">Drop files here to index</p>
+                    <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest">PDF, CSV, Markdown up to 50MB</p>
+                  </div>
+
+                  {/* Document Table Mockup */}
+                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-[32px] overflow-hidden">
+                    <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
+                      <h3 className="font-bold">Indexed Documents</h3>
+                      <button className="text-xs font-bold text-brand-500 uppercase tracking-widest hover:text-brand-400">View All</button>
+                    </div>
+                    <div className="p-6">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 border-b border-zinc-800">
+                            <th className="pb-4">Document</th>
+                            <th className="pb-4">Status</th>
+                            <th className="pb-4">Access Level</th>
+                            <th className="pb-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-sm">
+                          <tr className="border-b border-zinc-800/50 group">
+                            <td className="py-4">
+                              <div className="flex items-center space-x-3">
+                                <FileText size={16} className="text-brand-500" />
+                                <span className="font-medium">q1_financials.pdf</span>
+                              </div>
+                            </td>
+                            <td className="py-4">
+                              <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold rounded uppercase tracking-wider">Indexed</span>
+                            </td>
+                            <td className="py-4">
+                              <div className="flex -space-x-2">
+                                <div className="w-6 h-6 rounded-full bg-brand-500 border-2 border-zinc-900 flex items-center justify-center text-[8px] font-bold" title="Admin">A</div>
+                                <div className="w-6 h-6 rounded-full bg-emerald-500 border-2 border-zinc-900 flex items-center justify-center text-[8px] font-bold" title="Finance">F</div>
+                              </div>
+                            </td>
+                            <td className="py-4 text-right">
+                              <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition-colors">
+                                <BarChart3 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                          <tr className="group">
+                            <td className="py-4">
+                              <div className="flex items-center space-x-3">
+                                <FileText size={16} className="text-brand-500" />
+                                <span className="font-medium">marketing_strategy_2024.md</span>
+                              </div>
+                            </td>
+                            <td className="py-4">
+                              <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold rounded uppercase tracking-wider">Indexed</span>
+                            </td>
+                            <td className="py-4">
+                              <div className="flex -space-x-2">
+                                <div className="w-6 h-6 rounded-full bg-brand-500 border-2 border-zinc-900 flex items-center justify-center text-[8px] font-bold" title="Admin">A</div>
+                                <div className="w-6 h-6 rounded-full bg-purple-500 border-2 border-zinc-900 flex items-center justify-center text-[8px] font-bold" title="Marketing">M</div>
+                              </div>
+                            </td>
+                            <td className="py-4 text-right">
+                              <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition-colors">
+                                <BarChart3 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sidebar Stats */}
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-br from-brand-600 to-purple-600 rounded-[32px] p-8 shadow-xl shadow-brand-500/10">
+                    <h4 className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Vector Storage</h4>
+                    <div className="text-3xl font-bold text-white mb-4">2,482 <span className="text-lg font-medium opacity-60">Chunks</span></div>
+                    <div className="w-full bg-white/20 h-2 rounded-full mb-2">
+                      <div className="bg-white w-[65%] h-full rounded-full" />
+                    </div>
+                    <p className="text-[10px] text-white/60 font-bold uppercase">65% of Qdrant Capacity Used</p>
+                  </div>
+
+                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-[32px] p-8 space-y-6">
+                    <h4 className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Ingestion Pipeline</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        </div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">Parsing Engine</div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        </div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">Embedding (all-MiniLM)</div>
+                      </div>
+                      <div className="flex items-center space-x-4 opacity-50">
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-zinc-500" />
+                        </div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-zinc-500">Metadata Tagging</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {activeTab === 'guardrails' && (
             <div className="p-8 max-w-4xl mx-auto space-y-6">
               <h2 className="text-2xl font-bold">Guardrails Configuration</h2>
