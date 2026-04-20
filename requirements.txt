@@ -31,3 +31,4 @@ prometheus-fastapi-instrumentator
 ragas
 datasets
 pypdf
+flashrank

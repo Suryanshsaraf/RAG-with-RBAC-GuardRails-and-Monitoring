@@ -23,30 +23,18 @@ from langchain_core.documents import Document
 from app.core.config import settings
 from app.ingestion.embedder import get_embedding_model
 from app.ingestion.vector_store import get_qdrant_client, get_sparse_embedder
+from app.rag.reranker import get_reranker
 
 
 def search(
     query: str,
     top_k: int = 5,
     role_filter: Optional[str] = None,
+    rerank: bool = True
 ) -> List[Document]:
     """
     Perform hybrid (dense + sparse) search against the Qdrant collection.
-
-    Parameters
-    ----------
-    query : str
-        The user's natural-language query.
-    top_k : int
-        Number of results to return.
-    role_filter : str, optional
-        If provided, only return documents tagged with this RBAC role
-        (or 'general' which is accessible to everyone).
-
-    Returns
-    -------
-    list[Document]
-        Matching documents with score in metadata.
+    Optional RBAC role-based filtering and FlashRank reranking.
     """
     client = get_qdrant_client()
     embedder = get_embedding_model()
@@ -71,13 +59,16 @@ def search(
         )
 
     # 3. Perform Hybrid Search with RRF
+    # If reranking is enabled, we fetch more documents for the second stage
+    fetch_k = top_k * 3 if rerank else top_k
+
     results = client.query_points(
         collection_name=settings.qdrant_collection_name,
         prefetch=[
             Prefetch(
                 query=NearestQuery(nearest=dense_vector),
                 using="",
-                limit=top_k * 2,
+                limit=fetch_k,
                 filter=qdrant_filter,
             ),
             Prefetch(
@@ -88,12 +79,12 @@ def search(
                     )
                 ),
                 using="text-sparse",
-                limit=top_k * 2,
+                limit=fetch_k,
                 filter=qdrant_filter,
             ),
         ],
         query=FusionQuery(fusion=Fusion.RRF),
-        limit=top_k,
+        limit=fetch_k,
         with_payload=True,
     ).points
 
@@ -108,4 +99,9 @@ def search(
         }
         documents.append(Document(page_content=page_content, metadata=metadata))
 
-    return documents
+    # ── 4. Optional Reranking Step ──────────────────────────────────
+    if rerank and documents:
+        reranker = get_reranker()
+        documents = reranker.rerank(query, documents, top_n=top_k)
+
+    return documents[:top_k]
