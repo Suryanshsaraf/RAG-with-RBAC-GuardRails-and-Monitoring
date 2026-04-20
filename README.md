@@ -26,7 +26,7 @@ EnterpriseRAG is a production-grade **Retrieval-Augmented Generation (RAG)** sys
 - **Multi-Query & Reranking**: Parallel retrieval and FlashRank cross-encoder re-scoring for top-tier precision.
 
 ### 📊 Observability & UI
-- **Premium Dashboard**: **[NEW]** Custom dark-mode UI with streaming responses, department-specific badges, and interactive source cards.
+- **Premium Dashboard**: **[NEW]** Immersive landing page, custom dark-mode UI with streaming responses, department-specific badges, and interactive source cards.
 - **LangSmith Tracing**: End-to-end visibility into the retrieval chain.
 - **Monitoring**: Real-time infrastructure metrics via Prometheus and Grafana.
 
