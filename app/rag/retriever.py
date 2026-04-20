@@ -19,6 +19,7 @@ from qdrant_client.models import (
     SparseVector as QdrantSparseVector
 )
 from langchain_core.documents import Document
+from langchain_community.document_transformers import LongContextReorder
 
 from app.core.config import settings
 from app.ingestion.embedder import get_embedding_model
@@ -138,5 +139,11 @@ async def search(
         reranker = get_reranker()
         # Rerank against original query
         all_docs = reranker.rerank(query, all_docs, top_n=top_k)
+
+    # ── 4. Lost in the Middle Reordering ────────────────────────────
+    # Reorder documents so that most relevant ones are at the beginning and end
+    if len(all_docs) > 2:
+        reordering = LongContextReorder()
+        all_docs = reordering.transform_documents(all_docs)
 
     return all_docs[:top_k]
