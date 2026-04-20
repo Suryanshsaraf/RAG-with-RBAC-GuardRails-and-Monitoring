@@ -61,8 +61,8 @@ def search(
 
     # ── Build optional RBAC filter ──────────────────────────────────
     qdrant_filter = None
-    if role_filter:
-        # User can see docs matching their role OR 'general' docs
+    if role_filter and role_filter.lower() != "admin":
+        # Admin sees everything. Non-admins see their role + 'general'.
         qdrant_filter = Filter(
             should=[
                 FieldCondition(key="role", match=MatchValue(value=role_filter)),
