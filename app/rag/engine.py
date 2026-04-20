@@ -44,10 +44,17 @@ class RAGEngine:
         # 1. Retrieve
         docs = search(question, top_k=top_k, role_filter=role)
         
-        # 2. Format Context
+        # 2. Check if anything was found
+        if not docs or (len(docs) > 0 and docs[0].metadata.get("score", 0) < 0.01):
+            return {
+                "answer": "I don't know the answer to that based on the available documents. I don't have access to information outside the provided context.",
+                "source_documents": docs
+            }
+        
+        # 3. Format Context
         context = format_docs(docs)
         
-        # 3. Generate
+        # 4. Generate
         answer = self.chain.invoke({
             "context": context,
             "question": question
