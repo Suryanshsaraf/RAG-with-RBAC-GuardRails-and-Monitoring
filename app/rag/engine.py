@@ -10,22 +10,24 @@ from langchain_core.documents import Document
 
 from app.rag.retriever import search
 from app.rag.generator import get_rag_chain, format_docs
+from app.guardrails.manager import GuardrailsManager
 
 
 class RAGEngine:
-    """Enterprise RAG Engine with RBAC."""
+    """Enterprise RAG Engine with RBAC and Guardrails."""
 
     def __init__(self):
         self.chain = get_rag_chain()
+        self.guardrails = GuardrailsManager()
 
-    def query(
+    async def query(
         self, 
         question: str, 
         role: str = "general", 
         top_k: int = 5
     ) -> Dict:
         """
-        Execute a full RAG query: Retrieve → Generate.
+        Execute a full RAG query: Guardrails (Input) → Retrieve → Generate → Guardrails (Output).
 
         Parameters
         ----------
@@ -39,9 +41,18 @@ class RAGEngine:
         Returns
         -------
         dict
-            Contains 'answer' and 'source_documents'.
+            Contains 'answer', 'source_documents', and metadata.
         """
-        # 1. Retrieve
+        # 1. Input Guardrails (Pre-retrieval)
+        violation = await self.guardrails.check_input(question)
+        if violation:
+            return {
+                "answer": violation,
+                "source_documents": [],
+                "guardrail_triggered": True
+            }
+
+        # 2. Retrieve
         docs = search(question, top_k=top_k, role_filter=role)
         
         # 2. Check if anything was found
@@ -60,9 +71,13 @@ class RAGEngine:
             "question": question
         })
         
+        # 5. Output Guardrails (PII Scrubbing on Answer)
+        clean_answer = self.pii_scrubber.scrub(answer) if hasattr(self, 'pii_scrubber') else self.guardrails.pii_scrubber.scrub(answer)
+        
         return {
-            "answer": answer,
-            "source_documents": docs
+            "answer": clean_answer,
+            "source_documents": docs,
+            "guardrail_triggered": False
         }
 
 
