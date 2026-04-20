@@ -76,10 +76,41 @@ function App() {
       />
       
       <main className="flex-1 md:ml-72 flex flex-col h-screen overflow-hidden">
-        <header className="md:hidden flex items-center justify-center h-16 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-brand-400 to-purple-500 bg-clip-text text-transparent uppercase tracking-wider">
-            {activeTab === 'chat' ? 'Enterprise RAG' : activeTab}
-          </h1>
+        {/* Header */}
+        <header className="h-16 border-b border-zinc-800/50 bg-zinc-950/50 backdrop-blur-md px-6 flex items-center justify-between z-20">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            >
+              <Menu size={20} />
+            </button>
+            <h1 className="text-sm font-bold uppercase tracking-widest text-zinc-500">
+              {activeTab}
+            </h1>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {user && (
+              <div className="flex items-center space-x-3 bg-zinc-900/50 border border-zinc-800 py-1.5 pl-1.5 pr-3 rounded-full">
+                <div className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg",
+                  user.role === 'admin' ? "bg-brand-500 shadow-brand-500/20" : 
+                  user.role === 'Marketing' ? "bg-purple-500 shadow-purple-500/20" : 
+                  "bg-emerald-500 shadow-emerald-500/20"
+                )}>
+                  {user.role[0]}
+                </div>
+                <span className="text-xs font-bold tracking-tight text-zinc-300">{user.role} Context</span>
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full animate-pulse",
+                  user.role === 'admin' ? "bg-brand-500" : 
+                  user.role === 'Marketing' ? "bg-purple-500" : 
+                  "bg-emerald-500"
+                )} />
+              </div>
+            )}
+          </div>
         </header>
         
         <div className="flex-1 overflow-hidden relative">

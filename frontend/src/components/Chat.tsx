@@ -194,14 +194,16 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
         </div>
 
         {msg.sources && msg.sources.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-zinc-800/50">
-            <button 
-              onClick={() => setShowSources(!showSources)}
-              className="flex items-center space-x-1 text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
-            >
-              <span>{msg.sources.length} Sources Used</span>
-              {showSources ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
+          <div className="mt-6 pt-6 border-t border-zinc-800/50">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Retrieval Sources</h4>
+              <button 
+                onClick={() => setShowSources(!showSources)}
+                className="text-[10px] font-bold uppercase tracking-widest text-brand-500 hover:text-brand-400 transition-colors"
+              >
+                {showSources ? 'Hide' : `View ${msg.sources.length} Sources`}
+              </button>
+            </div>
             
             <AnimatePresence>
               {showSources && (
@@ -211,11 +213,25 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-3 space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     {msg.sources.map((src, i) => (
-                      <div key={i} className="bg-zinc-950 p-3 rounded-lg text-xs border border-zinc-800/50">
-                        <div className="font-medium text-brand-400 mb-1">Source {i + 1}</div>
-                        <p className="text-zinc-400 line-clamp-3">{src.content}</p>
+                      <div key={i} className="group bg-zinc-950/50 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+                              <FileText size={12} className="text-zinc-500" />
+                            </div>
+                            <span className="text-[10px] font-bold text-zinc-400 truncate max-w-[120px]">
+                              {src.metadata?.source?.split('/').pop() || 'Untitled Document'}
+                            </span>
+                          </div>
+                          {src.metadata?.page && (
+                            <span className="text-[10px] bg-zinc-900 px-2 py-0.5 rounded text-zinc-500">P. {src.metadata.page}</span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-zinc-500 leading-relaxed line-clamp-3 group-hover:text-zinc-300 transition-colors">
+                          "{src.content}"
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -225,6 +241,21 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {msg.guardrail_triggered && !isUser && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, x: 20 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            className="absolute -top-4 right-0 z-10"
+          >
+            <div className="bg-amber-500/10 border border-amber-500/50 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center space-x-2 shadow-lg shadow-amber-500/10">
+              <ShieldAlert size={14} className="text-amber-500" />
+              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Guardrail Intervened</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isUser && (
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 ml-4 mt-1">
