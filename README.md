@@ -77,7 +77,8 @@ graph TD
 
 ### 📦 Prerequisites
 - Docker & Docker Compose
-- Python 3.10+ (for local development)
+- Python 3.10+
+- Node.js 18+ & npm 
 - [Groq API Key](https://console.groq.com/)
 
 ### 🛠️ Installation & Setup
@@ -99,7 +100,7 @@ graph TD
    ```bash
    docker-compose up --build
    ```
-   - **Dashboard**: `http://localhost:8501`
+    - **Frontend**: `http://localhost:5173` (via npm run dev)
    - **API Docs**: `http://localhost:8000/docs`
    - **Prometheus**: `http://localhost:9090`
    - **Grafana**: `http://localhost:3000`
