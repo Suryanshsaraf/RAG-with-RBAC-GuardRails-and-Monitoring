@@ -32,3 +32,4 @@ ragas
 datasets
 pypdf
 flashrank
+pymupdf

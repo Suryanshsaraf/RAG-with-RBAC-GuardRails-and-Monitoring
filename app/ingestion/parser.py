@@ -58,10 +58,11 @@ def parse_markdown(file_path: str) -> List[Document]:
     return [Document(page_content=content, metadata=metadata)]
 
 
-def parse_pdf(file_path: str) -> List[Document]:
+async def parse_pdf(file_path: str) -> List[Document]:
     """
-    Parse a PDF file using LangChain's PyPDFLoader.
+    Parse a PDF file using LangChain's PyPDFLoader and multimodal extraction.
     """
+    # 1. Standard text extraction
     loader = PyPDFLoader(file_path)
     pages = loader.load()
 
@@ -73,6 +74,17 @@ def parse_pdf(file_path: str) -> List[Document]:
             "role": role,
             "file_type": "pdf",
         })
+
+    # 2. Multimodal extraction (Images)
+    try:
+        from app.ingestion.multimodal import process_pdf_multimodal
+        image_docs = await process_pdf_multimodal(file_path)
+        # Assign same role to image captions
+        for doc in image_docs:
+            doc.metadata["role"] = role
+        pages.extend(image_docs)
+    except Exception as e:
+        print(f"  Warning: Multimodal extraction failed for {file_path}: {e}")
 
     return pages
 
@@ -135,24 +147,9 @@ def parse_csv(file_path: str) -> List[Document]:
     return documents
 
 
-def parse_document(file_path: str) -> List[Document]:
+async def parse_document(file_path: str) -> List[Document]:
     """
     Route a file to the correct parser based on its extension.
-
-    Parameters
-    ----------
-    file_path : str
-        Path to the document.
-
-    Returns
-    -------
-    list[Document]
-        Parsed LangChain Documents.
-
-    Raises
-    ------
-    ValueError
-        If the file type is not supported.
     """
     ext = Path(file_path).suffix.lower()
 
@@ -161,12 +158,12 @@ def parse_document(file_path: str) -> List[Document]:
     elif ext == ".csv":
         return parse_csv(file_path)
     elif ext == ".pdf":
-        return parse_pdf(file_path)
+        return await parse_pdf(file_path)
     else:
         raise ValueError(f"Unsupported file type: {ext}  (file: {file_path})")
 
 
-def load_all_documents(data_dir: str = "data") -> List[Document]:
+async def load_all_documents(data_dir: str = "data") -> List[Document]:
     """
     Walk the data directory and parse every supported file.
 
@@ -196,7 +193,7 @@ def load_all_documents(data_dir: str = "data") -> List[Document]:
             ext = Path(fname).suffix.lower()
             if ext in supported_extensions:
                 full_path = os.path.join(root, fname)
-                docs = parse_document(full_path)
+                docs = await parse_document(full_path)
                 print(f"  Parsed {full_path}: {len(docs)} document(s)")
                 all_docs.extend(docs)
 

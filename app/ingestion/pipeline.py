@@ -16,7 +16,7 @@ from app.ingestion.vector_store import upsert_documents, get_collection_info
 from app.ingestion.versioning import get_changed_files, register_ingestion
 
 
-def run_ingestion(data_dir: str = "data", full: bool = False) -> dict:
+async def run_ingestion(data_dir: str = "data", full: bool = False) -> dict:
     """
     Execute the full document ingestion pipeline.
 
@@ -42,7 +42,7 @@ def run_ingestion(data_dir: str = "data", full: bool = False) -> dict:
     if full:
         # Full ingestion — parse everything
         print("\n📄  Step 1/4: Parsing ALL documents …")
-        documents = load_all_documents(data_dir)
+        documents = await load_all_documents(data_dir)
         ingested_files = [d.metadata["source_path"] for d in documents]
         # Deduplicate (CSV rows share same source_path)
         ingested_files = list(set(ingested_files))
@@ -61,7 +61,8 @@ def run_ingestion(data_dir: str = "data", full: bool = False) -> dict:
 
         documents = []
         for fp in changed:
-            documents.extend(parse_document(fp))
+            docs = await parse_document(fp)
+            documents.extend(docs)
         ingested_files = changed
 
     # Step 2: Chunk
@@ -97,10 +98,12 @@ def run_ingestion(data_dir: str = "data", full: bool = False) -> dict:
     }
 
 
+import asyncio
+
 if __name__ == "__main__":
     force_full = "--full" in sys.argv
     data_directory = "data"
     for arg in sys.argv[1:]:
         if arg != "--full":
             data_directory = arg
-    run_ingestion(data_directory, full=force_full)
+    asyncio.run(run_ingestion(data_directory, full=force_full))
