@@ -27,3 +27,6 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 httpx
+prometheus-fastapi-instrumentator
+ragas
+datasets

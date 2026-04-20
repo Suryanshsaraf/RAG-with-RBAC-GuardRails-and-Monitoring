@@ -14,11 +14,17 @@ from app.core.config import settings
 from app.auth.handler import create_access_token, verify_password, hash_password
 from app.auth.deps import get_current_user, UserSession
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 app = FastAPI(
     title="EnterpriseRAG API",
     description="Backend for querying the RAG system with RBAC and Guardrails",
     version="0.1.0"
 )
+
+# --- Monitoring ---
+Instrumentator().instrument(app).expose(app)
+
 
 # --- Mock User Database (For Demo Purposes) ---
 # In a production app, use a real database (PostgreSQL/MongoDB)
