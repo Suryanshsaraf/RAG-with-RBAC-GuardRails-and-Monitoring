@@ -1,0 +1,28 @@
+models:
+  - type: main
+    engine: groq
+    model: llama-3.1-8b-instant
+
+rails:
+  # Input rails: check for jailbreaks and off-topic queries
+  input:
+    flows:
+      - check jailbreak
+      - check off topic
+
+  # Output rails: check for hallucinations and PII
+  output:
+    flows:
+      - check hallucinations
+      - self correction
+
+prompts:
+  - task: self_check_hallucination
+    content: |
+      You are an expert evaluator. 
+      Given the context and the generated answer, does the answer contain information not present in the context?
+      Answer with only "yes" or "no".
+
+      Context: {context}
+      Answer: {answer}
+      Hallucination:
