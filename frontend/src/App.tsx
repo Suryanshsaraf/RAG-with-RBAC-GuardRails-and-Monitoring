@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { Chat } from './components/Chat';
+import { LandingPage } from './components/LandingPage';
 import { jwtDecode } from 'jwt-decode';
 import { cn } from './lib/utils';
 
@@ -18,6 +19,7 @@ export interface UserInfo {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'guardrails' | 'settings'>('chat');
@@ -56,6 +58,9 @@ function App() {
   };
 
   if (!isAuthenticated) {
+    if (showLanding) {
+      return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+    }
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
