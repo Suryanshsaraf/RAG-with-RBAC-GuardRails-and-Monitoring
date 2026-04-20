@@ -245,25 +245,128 @@ function App() {
             </div>
           )}
           {activeTab === 'guardrails' && (
-            <div className="p-8 max-w-4xl mx-auto space-y-6">
-              <h2 className="text-2xl font-bold">Guardrails Configuration</h2>
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                <p className="text-zinc-400 mb-4">View and configure AI security policies.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg bg-zinc-950 border border-zinc-800">
-                    <h3 className="font-medium mb-2">Input Scanning</h3>
-                    <p className="text-xs text-zinc-500">Filters toxic, jailbreak, and off-topic questions.</p>
-                    <div className="mt-3 flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <span className="text-xs font-medium text-green-400 uppercase">Active</span>
+            <div className="p-8 max-w-6xl mx-auto space-y-8">
+              <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold">Observability & Security</h2>
+                <div className="flex space-x-2">
+                  <button className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors">Live Logs</button>
+                  <button className="px-4 py-2 bg-brand-600 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-brand-500 transition-colors">Refresh Data</button>
+                </div>
+              </div>
+
+              {/* Bento Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {/* Latency Metric */}
+                <div className="bg-zinc-900/50 border border-zinc-800 rounded-[32px] p-6 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-brand-500/10 rounded-2xl">
+                      <Zap size={20} className="text-brand-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">-12%</span>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Avg Latency</p>
+                    <h3 className="text-3xl font-bold tracking-tight">242ms</h3>
+                  </div>
+                </div>
+
+                {/* Queries Metric */}
+                <div className="bg-zinc-900/50 border border-zinc-800 rounded-[32px] p-6 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-purple-500/10 rounded-2xl">
+                      <FileText size={20} className="text-purple-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">+18%</span>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Queries</p>
+                    <h3 className="text-3xl font-bold tracking-tight">12,842</h3>
+                  </div>
+                </div>
+
+                {/* Blocked Queries */}
+                <div className="bg-zinc-900/50 border border-zinc-800 rounded-[32px] p-6 flex flex-col justify-between lg:col-span-2">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-amber-500/10 rounded-2xl">
+                      <Shield size={20} className="text-amber-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Security Health: Good</span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Jailbreak Attempts</p>
+                      <h3 className="text-2xl font-bold text-red-500">12</h3>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">PII Redactions</p>
+                      <h3 className="text-2xl font-bold text-brand-400">421</h3>
                     </div>
                   </div>
-                  <div className="p-4 rounded-lg bg-zinc-950 border border-zinc-800">
-                    <h3 className="font-medium mb-2">PII Scrubbing</h3>
-                    <p className="text-xs text-zinc-500">Detects and hides personal identifiable information.</p>
-                    <div className="mt-3 flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <span className="text-xs font-medium text-green-400 uppercase">Active</span>
+                </div>
+
+                {/* Security Log Table */}
+                <div className="lg:col-span-3 bg-zinc-900/50 border border-zinc-800 rounded-[32px] overflow-hidden">
+                  <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+                    <h3 className="font-bold">Security & Guardrail Logs</h3>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <div className="p-6">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 border-b border-zinc-800">
+                          <th className="pb-4">Timestamp</th>
+                          <th className="pb-4">User</th>
+                          <th className="pb-4">Action</th>
+                          <th className="pb-4">Reason</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-[11px] font-medium">
+                        <tr className="border-b border-zinc-800/50">
+                          <td className="py-4 text-zinc-500 italic">2 mins ago</td>
+                          <td className="py-4 font-bold text-zinc-300">fin_user_01</td>
+                          <td className="py-4"><span className="text-red-500 bg-red-500/10 px-2 py-0.5 rounded uppercase font-bold">Blocked</span></td>
+                          <td className="py-4 text-zinc-400">Restricted Category Access</td>
+                        </tr>
+                        <tr className="border-b border-zinc-800/50">
+                          <td className="py-4 text-zinc-500 italic">14 mins ago</td>
+                          <td className="py-4 font-bold text-zinc-300">mark_user_02</td>
+                          <td className="py-4"><span className="text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded uppercase font-bold">Scrubbed</span></td>
+                          <td className="py-4 text-zinc-400">PII Detection (Email)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-4 text-zinc-500 italic">1 hour ago</td>
+                          <td className="py-4 font-bold text-zinc-300">admin</td>
+                          <td className="py-4"><span className="text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded uppercase font-bold">Allowed</span></td>
+                          <td className="py-4 text-zinc-400">System Configuration Query</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* RBAC Matrix Card */}
+                <div className="bg-zinc-900/50 border border-zinc-800 rounded-[32px] p-6 overflow-hidden">
+                  <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-6">RBAC Matrix</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-zinc-400">Finance Docs</span>
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 rounded bg-brand-500" title="Admin" />
+                        <div className="w-2 h-2 rounded bg-emerald-500" title="Finance" />
+                        <div className="w-2 h-2 rounded bg-zinc-800" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-zinc-400">Marketing Docs</span>
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 rounded bg-brand-500" />
+                        <div className="w-2 h-2 rounded bg-zinc-800" />
+                        <div className="w-2 h-2 rounded bg-purple-500" title="Marketing" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-zinc-800 pt-4 mt-4">
+                      <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">Configure Grid</span>
+                      <ArrowRight size={12} className="text-brand-500" />
                     </div>
                   </div>
                 </div>
