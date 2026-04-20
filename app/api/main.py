@@ -7,6 +7,7 @@ Main entry point for the API, handling queries and system status.
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import shutil
@@ -28,6 +29,15 @@ app = FastAPI(
     title="EnterpriseRAG API",
     description="Backend for querying the RAG system with RBAC and Guardrails",
     version="1.0.0"
+)
+
+# --- CORS Setup ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins for local development (e.g., localhost:5173)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Monitoring ---
