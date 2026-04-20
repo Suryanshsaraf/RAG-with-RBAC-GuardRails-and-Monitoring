@@ -9,6 +9,7 @@ rails:
     flows:
       - check jailbreak
       - check off topic
+      - check toxic
 
   # Output rails: check for hallucinations and PII
   output:

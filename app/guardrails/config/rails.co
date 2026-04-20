@@ -33,3 +33,22 @@ define flow check hallucinations
 
 define bot refuse hallucination
   "I apologize, but I couldn't find a factual basis for that answer in the provided documents."
+
+define user ask toxic
+  "You are stupid"
+  "I hate you"
+  "Shut up"
+  "Some offensive slur"
+
+define flow check toxic
+  user ask toxic
+  bot refuse toxic
+  stop
+
+define bot refuse toxic
+  "I cannot answer this as it contains inappropriate or toxic content."
+
+define flow self correction
+  # Placeholder for self-correction logic
+  bot "Self-correction applied."
+

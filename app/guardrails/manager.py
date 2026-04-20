@@ -11,26 +11,34 @@ from nemoguardrails import RailsConfig, LLMRails
 from app.core.config import settings
 
 
+from app.guardrails.pii import get_pii_scrubber
+
+
 class GuardrailsManager:
     """Manages AI Guardrails using NeMo Guardrails."""
 
     def __init__(self, config_path: str = "app/guardrails/config"):
         self.config = RailsConfig.from_path(config_path)
         self.rails = LLMRails(self.config)
+        self.pii_scrubber = get_pii_scrubber()
 
     async def check_input(self, text: str) -> Optional[str]:
         """
         Check if the input violates any rails.
         Returns a refusal message if violated, else None.
         """
-        # Note: NeMo Rails usually handles the full interaction.
-        # Here we use it for specific checks.
-        response = await self.rails.generate_async(prompt=text)
+        # 1. PII Scrubbing (pre-emptive)
+        # Note: We scrub BEFORE sending to LLM to prevent PII leakage.
+        clean_text = self.pii_scrubber.scrub(text)
+        
+        # 2. NeMo Rails
+        response = await self.rails.generate_async(prompt=clean_text)
         
         # If the bot returned a refusal message defined in .co
         if response in [
             "I am sorry, but I can only answer questions related to company documents and policies.",
-            "I cannot comply with this request as it violates safety guidelines."
+            "I cannot comply with this request as it violates safety guidelines.",
+            "I cannot answer this as it contains inappropriate or toxic content."
         ]:
             return response
         return None
@@ -39,7 +47,7 @@ class GuardrailsManager:
         """
         Apply guardrails to a RAG query.
         """
-        # 1. Pre-retrieval Check (Jailbreak/Off-topic)
+        # 1. Pre-retrieval Check (Jailbreak/Off-topic/Toxic)
         violation = await self.check_input(question)
         if violation:
             return {
@@ -49,13 +57,10 @@ class GuardrailsManager:
             }
 
         # 2. Execute RAG
-        # Note: In a production app, we would pipe the RAG context 
-        # into NeMo for hallucination checks.
         result = rag_engine_query_func(question)
         
-        # 3. Post-generation Check (Hallucination/PII)
-        # For now, we return the RAG result.
-        # (Hallucination check requires valid LLM keys to work within NeMo)
+        # 3. Post-generation Check (PII Scrubbing on Answer)
+        result["answer"] = self.pii_scrubber.scrub(result["answer"])
         
         return {
             **result,
