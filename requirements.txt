@@ -23,3 +23,6 @@ nemoguardrails
 presidio-analyzer
 presidio-anonymizer
 spacy
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart

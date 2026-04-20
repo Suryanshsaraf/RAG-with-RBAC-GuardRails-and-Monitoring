@@ -4,12 +4,15 @@ FastAPI Backend for EnterpriseRAG.
 Main entry point for the API, handling queries and system status.
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 
 from app.rag.engine import get_rag_engine, RAGEngine
 from app.core.config import settings
+from app.auth.handler import create_access_token, verify_password, hash_password
+from app.auth.deps import get_current_user, UserSession
 
 app = FastAPI(
     title="EnterpriseRAG API",
@@ -17,13 +20,37 @@ app = FastAPI(
     version="0.1.0"
 )
 
+# --- Mock User Database (For Demo Purposes) ---
+# In a production app, use a real database (PostgreSQL/MongoDB)
+FAKE_USERS_DB = {
+    "admin": {
+        "username": "admin",
+        "hashed_password": hash_password("admin123"),
+        "role": "admin"
+    },
+    "mark": {
+        "username": "mark",
+        "hashed_password": hash_password("mark123"),
+        "role": "marketing"
+    },
+    "fin": {
+        "username": "fin",
+        "hashed_password": hash_password("fin123"),
+        "role": "finance"
+    }
+}
+
 # --- Request/Response Models ---
 
 class QueryRequest(BaseModel):
     question: str
-    role: str = "general"
     top_k: int = 5
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+# Existing models...
 class SourceDoc(BaseModel):
     content: str
     metadata: Dict
@@ -32,6 +59,26 @@ class QueryResponse(BaseModel):
     answer: str
     sources: List[SourceDoc]
     guardrail_triggered: bool
+
+# --- Authentication Endpoints ---
+
+@app.post("/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    OAuth2 compatible token login, get an access token for future requests.
+    """
+    user = FAKE_USERS_DB.get(form_data.username)
+    if not user or not verify_password(form_data.password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = create_access_token(
+        data={"sub": user["username"], "role": user["role"]}
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 # --- Endpoints ---
 
@@ -43,15 +90,17 @@ async def health_check():
 @app.post("/query", response_model=QueryResponse)
 async def process_query(
     request: QueryRequest,
+    current_user: UserSession = Depends(get_current_user),
     engine: RAGEngine = Depends(get_rag_engine)
 ):
     """
     Process a RAG query through retrieval, generation, and guardrails.
+    Requires a valid JWT token. Role is automatically derived from token.
     """
     try:
         result = await engine.query(
             question=request.question,
-            role=request.role,
+            role=current_user.role,
             top_k=request.top_k
         )
         
