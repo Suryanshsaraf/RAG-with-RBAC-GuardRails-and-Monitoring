@@ -9,6 +9,9 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from app.rag.engine import get_rag_engine, RAGEngine
 from app.core.config import settings
@@ -20,7 +23,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 app = FastAPI(
     title="EnterpriseRAG API",
     description="Backend for querying the RAG system with RBAC and Guardrails",
-    version="0.1.0"
+    version="1.0.0"
 )
 
 # --- Monitoring ---
