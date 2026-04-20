@@ -3,18 +3,20 @@ import { apiService } from '../api/services';
 import { UploadCloud, FileText, Settings, Shield, Menu, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { UserInfo } from '../App';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 interface SidebarProps {
+  user: UserInfo | null;
   onLogout: () => void;
   isMobileOpen: boolean;
   setIsMobileOpen: (open: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onLogout, isMobileOpen, setIsMobileOpen }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, isMobileOpen, setIsMobileOpen }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -107,9 +109,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, isMobileOpen, setIsM
       </div>
 
       <div className="mt-auto p-6 border-t border-zinc-800">
+        <div className="mb-4 flex items-center space-x-3 px-2">
+          <div className="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center font-bold text-white uppercase">
+            {user?.username.charAt(0)}
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <p className="text-sm font-medium text-white truncate">{user?.username}</p>
+            <p className="text-xs text-zinc-500 uppercase tracking-tight truncate">{user?.role} Role</p>
+          </div>
+        </div>
         <button 
           onClick={onLogout}
-          className="w-full py-2 px-4 rounded-lg border border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+          className="w-full py-2 px-4 rounded-lg border border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors text-sm"
         >
           Sign Out
         </button>

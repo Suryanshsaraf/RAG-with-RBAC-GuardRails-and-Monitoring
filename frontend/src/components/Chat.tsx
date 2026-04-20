@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { apiService, QueryResponse } from '../api/services';
+import { apiService, type QueryResponse } from '../api/services';
 import { Send, Bot, User, ShieldAlert, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +9,12 @@ import { twMerge } from 'tailwind-merge';
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const STARTER_PROMPTS = [
+  "What are the data privacy policies?",
+  "Tell me about the corporate structure.",
+  "How does the RBAC system work in this project?"
+];
 
 interface Message {
   id: string;
@@ -74,6 +80,34 @@ export const Chat: React.FC = () => {
             <MessageBubble key={msg.id} msg={msg} />
           ))}
         </AnimatePresence>
+
+        {messages.length === 1 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="max-w-3xl mx-auto mt-12"
+          >
+            <div className="flex items-center space-x-2 text-zinc-500 mb-4 px-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-500">ASK:</span>
+              <div className="h-[1px] flex-1 bg-zinc-800" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {STARTER_PROMPTS.map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setInput(prompt);
+                    // We could trigger submit here if we want immediate execution
+                  }}
+                  className="text-left p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:border-brand-500/50 hover:bg-zinc-800/50 transition-all text-sm text-zinc-300 hover:text-white"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
         {loading && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}

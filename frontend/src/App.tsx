@@ -2,24 +2,49 @@ import { useState, useEffect } from 'react';
 import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { Chat } from './components/Chat';
+import { jwtDecode } from 'jwt-decode';
+
+interface DecodedToken {
+  sub: string;
+  role: string;
+  exp: number;
+}
+
+export interface UserInfo {
+  username: string;
+  role: string;
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<UserInfo | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
-      setIsAuthenticated(true);
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        setUser({ username: decoded.sub, role: decoded.role });
+        setIsAuthenticated(true);
+      } catch (err) {
+        localStorage.removeItem('access_token');
+      }
     }
   }, []);
 
   const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      const decoded = jwtDecode<DecodedToken>(token);
+      setUser({ username: decoded.sub, role: decoded.role });
+      setIsAuthenticated(true);
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
+    setUser(null);
     setIsAuthenticated(false);
   };
 
@@ -30,6 +55,7 @@ function App() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex">
       <Sidebar 
+        user={user}
         onLogout={handleLogout} 
         isMobileOpen={isMobileSidebarOpen}
         setIsMobileOpen={setIsMobileSidebarOpen}
