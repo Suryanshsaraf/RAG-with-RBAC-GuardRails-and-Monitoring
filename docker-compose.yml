@@ -24,19 +24,6 @@ services:
       - qdrant
     restart: always
 
-  ui:
-    build:
-      context: .
-      dockerfile: Dockerfile.ui
-    container_name: enterpriserag-ui
-    ports:
-      - "8501:8501"
-    env_file:
-      - .env
-    depends_on:
-      - api
-    restart: always
-
   prometheus:
     image: prom/prometheus:latest
     container_name: enterpriserag-prometheus

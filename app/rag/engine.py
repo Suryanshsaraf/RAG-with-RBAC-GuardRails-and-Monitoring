@@ -74,12 +74,21 @@ class RAGEngine:
             "question": question
         })
         
-        # 5. Output Guardrails (PII Scrubbing on Answer)
-        clean_answer = self.pii_scrubber.scrub(answer) if hasattr(self, 'pii_scrubber') else self.guardrails.pii_scrubber.scrub(answer)
+        # Ensure answer is a string (NeMo/LangChain sometimes return TextAccessor)
+        answer_text = str(answer)
         
+        # 5. Output Guardrails (PII Scrubbing on Answer)
+        clean_answer = self.pii_scrubber.scrub(answer_text) if hasattr(self, 'pii_scrubber') else self.guardrails.pii_scrubber.scrub(answer_text)
+        
+        # Format sources for response
+        sources = [
+            {"content": doc.page_content, "metadata": self._sanitize_metadata(doc.metadata)}
+            for doc in docs
+        ]
+
         return {
             "answer": clean_answer,
-            "source_documents": docs,
+            "source_documents": sources,
             "guardrail_triggered": False
         }
 
@@ -115,14 +124,28 @@ class RAGEngine:
         # 4. Stream Generate
         context = format_docs(docs)
         async for chunk in self.chain.astream({"context": context, "question": question}):
-            yield json.dumps({"answer": chunk, "guardrail_triggered": False}) + "\n"
+            yield json.dumps({"answer": str(chunk), "guardrail_triggered": False}) + "\n"
         
         # 5. Final yield with sources
         sources = [
-            {"content": doc.page_content, "metadata": doc.metadata}
+            {"content": doc.page_content, "metadata": self._sanitize_metadata(doc.metadata)}
             for doc in docs
         ]
         yield json.dumps({"sources": sources}) + "\n"
+
+    def _sanitize_metadata(self, metadata: Dict) -> Dict:
+        """Ensure all metadata values are JSON serializable (handles float32/numpy)."""
+        clean_metadata = {}
+        for k, v in metadata.items():
+            if hasattr(v, 'item'): # numpy/float32
+                clean_metadata[k] = v.item()
+            elif isinstance(v, dict):
+                clean_metadata[k] = self._sanitize_metadata(v)
+            elif isinstance(v, list):
+                clean_metadata[k] = [x.item() if hasattr(x, 'item') else x for x in v]
+            else:
+                clean_metadata[k] = v
+        return clean_metadata
 
 
 def get_rag_engine() -> RAGEngine:

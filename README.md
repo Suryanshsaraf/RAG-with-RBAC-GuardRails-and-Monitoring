@@ -2,7 +2,9 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0+-009688.svg)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.30.0+-FF4B4B.svg)](https://streamlit.io/)
+[![React](https://img.shields.io/badge/React-18.0+-61DAFB.svg)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.0+-646CFF.svg)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC.svg)](https://tailwindcss.com/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -38,7 +40,7 @@ EnterpriseRAG is a production-grade **Retrieval-Augmented Generation (RAG)** sys
 | **Vector Database** | Qdrant |
 | **Embedding Models** | Sentence-Transformers (all-MiniLM-L6-v2) |
 | **Backend API** | FastAPI, Uvicorn, Pydantic Settings |
-| **Frontend UI** | Streamlit |
+| **Frontend UI** | React, Vite, Tailwind CSS v4, Framer Motion |
 | **Security** | NeMo Guardrails, Microsoft Presidio, PyJWT |
 | **Monitoring** | Prometheus, Grafana, LangSmith |
 | **DevOps** | Docker, Docker Compose |
@@ -62,7 +64,7 @@ graph TD
     
     Reorder --> LLM[LLM Generation - Groq/Llama-3]
     LLM --> API
-    API --> UI[Streamlit Dashboard]
+    API --> UI[Vite + React Dashboard]
     
     API -.-> LangSmith[LangSmith Traces]
     API -.-> Prom[Prometheus Metrics]
@@ -109,10 +111,13 @@ graph TD
    pip install -r requirements.txt
    
    # Start Backend
+   export PYTHONPATH=$PYTHONPATH:.
    uvicorn app.api.main:app --reload
-   
+    
    # Start Frontend (New terminal)
-   streamlit run app/ui/dashboard.py
+   cd frontend
+   npm install
+   npm run dev
    ```
 
 ---

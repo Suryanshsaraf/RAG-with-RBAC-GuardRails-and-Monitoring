@@ -3,6 +3,7 @@ import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { Chat } from './components/Chat';
 import { jwtDecode } from 'jwt-decode';
+import { cn } from './lib/utils';
 
 interface DecodedToken {
   sub: string;

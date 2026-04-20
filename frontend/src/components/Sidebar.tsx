@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
 import { apiService } from '../api/services';
 import { UploadCloud, FileText, Settings, Shield, Menu, X } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '../lib/utils';
 import type { UserInfo } from '../App';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 interface SidebarProps {
   user: UserInfo | null;

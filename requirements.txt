@@ -7,7 +7,6 @@ sentence-transformers
 qdrant-client
 fastapi
 uvicorn
-streamlit
 python-dotenv
 pandas
 pymupdf

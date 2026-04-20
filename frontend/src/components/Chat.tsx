@@ -3,12 +3,7 @@ import { apiService, type QueryResponse } from '../api/services';
 import { Send, Bot, User, ShieldAlert, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../lib/utils';
 
 const STARTER_PROMPTS = [
   "What are the data privacy policies?",

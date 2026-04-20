@@ -134,7 +134,7 @@ async def process_query(
         
         # Format sources for response
         sources = [
-            SourceDoc(content=doc.page_content, metadata=doc.metadata)
+            SourceDoc(content=doc["content"], metadata=doc["metadata"])
             for doc in result["source_documents"]
         ]
         
