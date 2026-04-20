@@ -15,20 +15,18 @@ EnterpriseRAG is a production-grade **Retrieval-Augmented Generation (RAG)** sys
 ### 🔐 Enterprise-Grade Security
 - **Role-Based Access Control (RBAC)**: Fine-grained filtering at the vector database level. Users only retrieve documents authorized for their specific role (Admin, HR, Finance, Marketing, Engineering).
 - **AI Guardrails (NeMo)**: Integrated jailbreak detection, off-topic filtering, and toxic content prevention.
-- **PII Scrubbing**: Automatic redaction of sensitive information (names, emails, SSNs) using Microsoft Presidio and custom regex patterns.
+- **PII Scrubbing**: Automatic redaction of sensitive information using Microsoft Presidio.
 
 ### 🧠 Advanced RAG Architecture
-- **Hybrid Search**: Combined Dense (Vector) and Sparse (Keyword) retrieval using Reciprocal Rank Fusion (RRF).
-- **Query Expansion (HyDE)**: Hypothetical Document Embeddings to bridge semantic gaps in user queries.
-- **Multi-Query Retrieval**: Parallel retrieval across multiple generated query variations to maximize recall.
-- **FlashRank Reranking**: Cross-encoder re-scoring of results for top-tier precision.
-- **Long Context Reordering**: "Lost in the Middle" optimization to keep relevant info at prompt extremities.
-- **Multi-modal Support**: Extraction and LLM-based captioning of images from PDF documents.
+- **Dynamic Knowledge Expansion**: **[NEW]** Upload PDFs, CSVs, or Markdown files directly through the dashboard with automated background indexing.
+- **Hybrid Search**: Combined Dense (Vector) and Sparse (Keyword) retrieval using RRF.
+- **Query Expansion (HyDE)**: Hypothetical Document Embeddings to bridge semantic gaps.
+- **Multi-Query & Reranking**: Parallel retrieval and FlashRank cross-encoder re-scoring for top-tier precision.
 
-### 📊 Observability & Evaluation
-- **LangSmith Tracing**: End-to-end visibility into every step of the retrieval and generation chain.
-- **Prometheus & Grafana**: System-level metrics (latency, requests, error rates) visualized in real-time.
-- **RAGAS Evaluation**: Automated metrics for Faithfulness, Relevancy, and Precision.
+### 📊 Observability & UI
+- **Premium Dashboard**: **[NEW]** Custom dark-mode UI with streaming responses, department-specific badges, and interactive source cards.
+- **LangSmith Tracing**: End-to-end visibility into the retrieval chain.
+- **Monitoring**: Real-time infrastructure metrics via Prometheus and Grafana.
 
 ---
 
