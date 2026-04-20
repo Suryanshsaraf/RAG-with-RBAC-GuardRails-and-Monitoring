@@ -42,14 +42,18 @@ def get_rag_chain():
     template = """You are a helpful assistant for an enterprise RAG system.
 Use the following context to answer the question.
 If the context doesn't contain enough information, say that you don't know based on the provided documents.
-Do not use your own knowledge outside of the provided context.
+
+IMPORTANT: 
+- Cite the source document numbers in your answer using square brackets, e.g., [1], [2].
+- Only use information from the provided context.
+- Do not use your own knowledge.
 
 Context:
 {context}
 
 Question: {question}
 
-Helpful Answer:"""
+Helpful Answer with Citations:"""
     
     prompt = ChatPromptTemplate.from_template(template)
     llm = get_llm()
