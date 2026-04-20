@@ -3,7 +3,7 @@ import { apiService } from '../api/services';
 import { UploadCloud, FileText, Settings, Shield, Menu, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { UserInfo } from '../App';
+import type { UserInfo } from '../App';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,12 +11,14 @@ function cn(...inputs: ClassValue[]) {
 
 interface SidebarProps {
   user: UserInfo | null;
+  activeTab: 'chat' | 'guardrails' | 'settings';
+  setActiveTab: (tab: 'chat' | 'guardrails' | 'settings') => void;
   onLogout: () => void;
   isMobileOpen: boolean;
   setIsMobileOpen: (open: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, isMobileOpen, setIsMobileOpen }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, setActiveTab, onLogout, isMobileOpen, setIsMobileOpen }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -50,15 +52,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, isMobileOpen, 
         </h2>
 
         <div className="space-y-2 mb-8">
-          <button className="w-full flex items-center space-x-3 px-4 py-3 bg-zinc-900 rounded-lg text-white font-medium hover:bg-zinc-800 transition-colors">
+          <button 
+            onClick={() => { setActiveTab('chat'); setIsMobileOpen(false); }}
+            className={cn(
+              "w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all",
+              activeTab === 'chat' ? "bg-brand-600 text-white shadow-lg shadow-brand-500/20" : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+            )}
+          >
             <FileText size={18} />
             <span>Chat Session</span>
           </button>
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors">
+          <button 
+            onClick={() => { setActiveTab('guardrails'); setIsMobileOpen(false); }}
+            className={cn(
+              "w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all",
+              activeTab === 'guardrails' ? "bg-brand-600 text-white shadow-lg shadow-brand-500/20" : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+            )}
+          >
             <Shield size={18} />
             <span>Guardrails</span>
           </button>
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors">
+          <button 
+            onClick={() => { setActiveTab('settings'); setIsMobileOpen(false); }}
+            className={cn(
+              "w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all",
+              activeTab === 'settings' ? "bg-brand-600 text-white shadow-lg shadow-brand-500/20" : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+            )}
+          >
             <Settings size={18} />
             <span>Settings</span>
           </button>
