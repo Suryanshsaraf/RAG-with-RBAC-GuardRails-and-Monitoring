@@ -8,12 +8,21 @@ with optional RBAC role-based filtering.
 from typing import List, Optional
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import FieldCondition, Filter, MatchValue
+from qdrant_client.models import (
+    FieldCondition, 
+    Filter, 
+    MatchValue, 
+    Prefetch, 
+    Fusion, 
+    FusionQuery, 
+    NearestQuery,
+    SparseVector as QdrantSparseVector
+)
 from langchain_core.documents import Document
 
 from app.core.config import settings
 from app.ingestion.embedder import get_embedding_model
-from app.ingestion.vector_store import get_qdrant_client
+from app.ingestion.vector_store import get_qdrant_client, get_sparse_embedder
 
 
 def search(
@@ -22,7 +31,7 @@ def search(
     role_filter: Optional[str] = None,
 ) -> List[Document]:
     """
-    Perform vector similarity search against the Qdrant collection.
+    Perform hybrid (dense + sparse) search against the Qdrant collection.
 
     Parameters
     ----------
@@ -41,8 +50,14 @@ def search(
     """
     client = get_qdrant_client()
     embedder = get_embedding_model()
+    sparse_embedder = get_sparse_embedder()
 
-    query_vector = embedder.embed_query(query)
+    # 1. Generate dense vector
+    dense_vector = embedder.embed_query(query)
+
+    # 2. Generate sparse vector
+    sparse_vector_gen = sparse_embedder.embed([query])
+    sparse_vector = next(sparse_vector_gen)
 
     # ── Build optional RBAC filter ──────────────────────────────────
     qdrant_filter = None
@@ -55,10 +70,29 @@ def search(
             ]
         )
 
+    # 3. Perform Hybrid Search with RRF
     results = client.query_points(
         collection_name=settings.qdrant_collection_name,
-        query=query_vector,
-        query_filter=qdrant_filter,
+        prefetch=[
+            Prefetch(
+                query=NearestQuery(nearest=dense_vector),
+                using="",
+                limit=top_k * 2,
+                filter=qdrant_filter,
+            ),
+            Prefetch(
+                query=NearestQuery(
+                    nearest=QdrantSparseVector(
+                        indices=sparse_vector.indices.tolist(),
+                        values=sparse_vector.values.tolist(),
+                    )
+                ),
+                using="text-sparse",
+                limit=top_k * 2,
+                filter=qdrant_filter,
+            ),
+        ],
+        query=FusionQuery(fusion=Fusion.RRF),
         limit=top_k,
         with_payload=True,
     ).points

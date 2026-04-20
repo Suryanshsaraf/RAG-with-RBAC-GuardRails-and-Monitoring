@@ -19,8 +19,11 @@ from qdrant_client.models import (
     PayloadSchemaType,
     PointStruct,
     VectorParams,
+    SparseVectorParams,
+    SparseVector,
 )
 from langchain_core.documents import Document
+from fastembed import SparseTextEmbedding
 
 from app.core.config import settings
 from app.ingestion.embedder import get_embedding_model
@@ -28,6 +31,7 @@ from app.ingestion.embedder import get_embedding_model
 
 # ── Qdrant client singleton ────────────────────────────────────────────
 _client: Optional[QdrantClient] = None
+_sparse_embedder: Optional[SparseTextEmbedding] = None
 
 
 def get_qdrant_client() -> QdrantClient:
@@ -36,6 +40,15 @@ def get_qdrant_client() -> QdrantClient:
     if _client is None:
         _client = QdrantClient(url=settings.qdrant_url)
     return _client
+
+
+def get_sparse_embedder() -> SparseTextEmbedding:
+    """Return the shared sparse embedder instance."""
+    global _sparse_embedder
+    if _sparse_embedder is None:
+        print("Loading sparse embedding model: BM25")
+        _sparse_embedder = SparseTextEmbedding(model_name="Qdrant/bm25")
+    return _sparse_embedder
 
 
 def ensure_collection(vector_size: int = 384) -> None:
@@ -61,6 +74,9 @@ def ensure_collection(vector_size: int = 384) -> None:
             size=vector_size,
             distance=Distance.COSINE,
         ),
+        sparse_vectors_config={
+            "text-sparse": SparseVectorParams(),
+        },
     )
 
     # Create payload indexes for fast RBAC filtering
@@ -75,7 +91,7 @@ def ensure_collection(vector_size: int = 384) -> None:
         field_schema=PayloadSchemaType.BOOL,
     )
 
-    print(f"✅  Created collection '{collection_name}' (dim={vector_size}, cosine)")
+    print(f"✅  Created collection '{collection_name}' (dim={vector_size}, cosine, hybrid enabled)")
     print("   Indexed payload fields: role, contains_pii")
 
 
@@ -98,6 +114,7 @@ def upsert_documents(chunks: List[Document], batch_size: int = 64) -> int:
     client = get_qdrant_client()
     collection_name = settings.qdrant_collection_name
     embedder = get_embedding_model()
+    sparse_embedder = get_sparse_embedder()
 
     ensure_collection()
 
@@ -107,23 +124,41 @@ def upsert_documents(chunks: List[Document], batch_size: int = 64) -> int:
         batch = chunks[i : i + batch_size]
         texts = [doc.page_content for doc in batch]
 
-        # Generate embeddings for the batch
-        vectors = embedder.embed_documents(texts)
+        # Generate dense embeddings
+        dense_vectors = embedder.embed_documents(texts)
+        
+        # Generate sparse embeddings
+        sparse_vectors_gen = sparse_embedder.embed(texts)
+        sparse_vectors = list(sparse_vectors_gen)
 
         points = []
-        for doc, vector in zip(batch, vectors):
+        for doc, dense_vector, sparse_vec in zip(batch, dense_vectors, sparse_vectors):
             point_id = str(uuid.uuid4())
             payload = {
                 "page_content": doc.page_content,
                 **doc.metadata,
             }
+            
+            # Convert fastembed sparse vector to Qdrant SparseVector
+            qdrant_sparse_vector = SparseVector(
+                indices=sparse_vec.indices.tolist(),
+                values=sparse_vec.values.tolist(),
+            )
+            
             points.append(
-                PointStruct(id=point_id, vector=vector, payload=payload)
+                PointStruct(
+                    id=point_id, 
+                    vector={
+                        "": dense_vector,
+                        "text-sparse": qdrant_sparse_vector
+                    }, 
+                    payload=payload
+                )
             )
 
         client.upsert(collection_name=collection_name, points=points)
         total_upserted += len(points)
-        print(f"  Upserted batch {i // batch_size + 1}: {len(points)} points")
+        print(f"  Upserted batch {i // batch_size + 1}: {len(points)} points (hybrid)")
 
     print(f"\n✅  Total points upserted: {total_upserted}")
     return total_upserted
