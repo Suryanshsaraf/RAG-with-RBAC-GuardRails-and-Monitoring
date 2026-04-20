@@ -76,6 +76,7 @@ with st.sidebar:
     st.subheader("Settings")
     top_k = st.slider("Top K Chunks", 1, 10, 5)
     use_hyde = st.toggle("Use HyDE Expansion", value=False, help="Generate hypothetical document to improve retrieval.")
+    multi_query = st.toggle("Use Multi-Query", value=False, help="Generate alternative versions of the question to improve coverage.")
 
 # --- Main Interface ---
 st.title("🏢 Enterprise Knowledge Base")
@@ -116,7 +117,12 @@ if prompt := st.chat_input("Ask a question about company policies, finances, or 
                 with requests.post(
                     f"{API_URL}/query/stream",
                     headers=headers,
-                    json={"question": prompt, "top_k": top_k, "use_hyde": use_hyde},
+                    json={
+                        "question": prompt, 
+                        "top_k": top_k, 
+                        "use_hyde": use_hyde,
+                        "multi_query": multi_query
+                    },
                     stream=True
                 ) as r:
                     for line in r.iter_lines():

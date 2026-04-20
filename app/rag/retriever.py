@@ -26,7 +26,7 @@ from app.ingestion.vector_store import get_qdrant_client, get_sparse_embedder
 from app.rag.reranker import get_reranker
 
 
-from app.rag.expansion import generate_hypothetical_document
+from app.rag.expansion import generate_hypothetical_document, rewrite_query
 
 
 async def search(
@@ -34,87 +34,109 @@ async def search(
     top_k: int = 5,
     role_filter: Optional[str] = None,
     rerank: bool = True,
-    use_hyde: bool = False
+    use_hyde: bool = False,
+    multi_query: bool = False
 ) -> List[Document]:
     """
     Perform hybrid (dense + sparse) search against the Qdrant collection.
-    Optional RBAC role-based filtering, FlashRank reranking, and HyDE expansion.
+    Optional RBAC, FlashRank reranking, HyDE expansion, and Multi-Query retrieval.
     """
     client = get_qdrant_client()
     embedder = get_embedding_model()
     sparse_embedder = get_sparse_embedder()
 
-    # ── 1. Query Expansion (HyDE) ──────────────────────────────────
-    search_query = query
+    # ── 1. Query Expansion (HyDE or Multi-Query) ──────────────────
+    queries = [query]
+    
+    if multi_query:
+        try:
+            alternatives = await rewrite_query(query, n=2)
+            queries.extend(alternatives)
+            # Deduplicate while preserving order
+            queries = list(dict.fromkeys(queries))
+        except Exception as e:
+            print(f"Multi-query expansion failed: {e}")
+
+    # HyDE is applied to the original query if enabled
     if use_hyde:
         try:
-            # Generate a hypothetical document to search with
             hypothetical_doc = await generate_hypothetical_document(query)
-            # Combine original query with hypothetical doc for better coverage
-            search_query = f"{query}\n{hypothetical_doc}"
+            # We add it as a separate query for retrieval
+            queries.append(hypothetical_doc)
         except Exception as e:
-            print(f"HyDE expansion failed: {e}. Falling back to original query.")
+            print(f"HyDE expansion failed: {e}")
 
-    # ── 2. Generate Vectors ────────────────────────────────────────
-    dense_vector = embedder.embed_query(search_query)
-    
-    # Sparse vector uses original query for better keyword matching
-    sparse_vector_gen = sparse_embedder.embed([query])
-    sparse_vector = next(sparse_vector_gen)
+    all_docs = []
+    seen_ids = set()
 
-    # ── 3. Build optional RBAC filter ──────────────────────────────
-    qdrant_filter = None
-    if role_filter and role_filter.lower() != "admin":
-        qdrant_filter = Filter(
-            should=[
-                FieldCondition(key="role", match=MatchValue(value=role_filter)),
-                FieldCondition(key="role", match=MatchValue(value="general")),
-            ]
-        )
+    # ── 2. Loop through queries (Parallelizable, but simple for now) ──
+    for q in queries:
+        # Generate Vectors
+        dense_vector = embedder.embed_query(q)
+        sparse_vector_gen = sparse_embedder.embed([q])
+        sparse_vector = next(sparse_vector_gen)
 
-    # ── 4. Perform Hybrid Search with RRF ──────────────────────────
-    fetch_k = top_k * 3 if rerank else top_k
+        # Build optional RBAC filter
+        qdrant_filter = None
+        if role_filter and role_filter.lower() != "admin":
+            qdrant_filter = Filter(
+                should=[
+                    FieldCondition(key="role", match=MatchValue(value=role_filter)),
+                    FieldCondition(key="role", match=MatchValue(value="general")),
+                ]
+            )
 
-    results = client.query_points(
-        collection_name=settings.qdrant_collection_name,
-        prefetch=[
-            Prefetch(
-                query=NearestQuery(nearest=dense_vector),
-                using="",
-                limit=fetch_k,
-                filter=qdrant_filter,
-            ),
-            Prefetch(
-                query=NearestQuery(
-                    nearest=QdrantSparseVector(
-                        indices=sparse_vector.indices.tolist(),
-                        values=sparse_vector.values.tolist(),
-                    )
+        # Perform Hybrid Search with RRF
+        fetch_k = top_k * 2 if rerank else top_k
+        
+        results = client.query_points(
+            collection_name=settings.qdrant_collection_name,
+            prefetch=[
+                Prefetch(
+                    query=NearestQuery(nearest=dense_vector),
+                    using="",
+                    limit=fetch_k,
+                    filter=qdrant_filter,
                 ),
-                using="text-sparse",
-                limit=fetch_k,
-                filter=qdrant_filter,
-            ),
-        ],
-        query=FusionQuery(fusion=Fusion.RRF),
-        limit=fetch_k,
-        with_payload=True,
-    ).points
+                Prefetch(
+                    query=NearestQuery(
+                        nearest=QdrantSparseVector(
+                            indices=sparse_vector.indices.tolist(),
+                            values=sparse_vector.values.tolist(),
+                        )
+                    ),
+                    using="text-sparse",
+                    limit=fetch_k,
+                    filter=qdrant_filter,
+                ),
+            ],
+            query=FusionQuery(fusion=Fusion.RRF),
+            limit=fetch_k,
+            with_payload=True,
+        ).points
 
-    # ── 5. Convert to LangChain Documents ──────────────────────────
-    documents: List[Document] = []
-    for hit in results:
-        payload = hit.payload or {}
-        page_content = payload.pop("page_content", "")
-        metadata = {
-            **payload,
-            "score": round(hit.score, 4),
-        }
-        documents.append(Document(page_content=page_content, metadata=metadata))
+        # Parse and deduplicate
+        for hit in results:
+            # We use a hash of the content as ID since we don't store point IDs in Document
+            content = hit.payload.get("page_content", "")
+            content_hash = hash(content)
+            
+            if content_hash not in seen_ids:
+                seen_ids.add(content_hash)
+                payload = hit.payload or {}
+                metadata = {
+                    **payload,
+                    "score": round(hit.score, 4),
+                }
+                # Remove large payload from metadata to keep it clean
+                metadata.pop("page_content", None)
+                
+                all_docs.append(Document(page_content=content, metadata=metadata))
 
-    # ── 6. Optional Reranking Step ──────────────────────────────────
-    if rerank and documents:
+    # ── 3. Optional Reranking Step ──────────────────────────────────
+    if rerank and all_docs:
         reranker = get_reranker()
-        documents = reranker.rerank(query, documents, top_n=top_k)
+        # Rerank against original query
+        all_docs = reranker.rerank(query, all_docs, top_n=top_k)
 
-    return documents[:top_k]
+    return all_docs[:top_k]

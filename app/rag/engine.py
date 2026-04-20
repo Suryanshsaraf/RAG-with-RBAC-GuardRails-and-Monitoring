@@ -26,7 +26,8 @@ class RAGEngine:
         question: str, 
         role: str = "general", 
         top_k: int = 5,
-        use_hyde: bool = False
+        use_hyde: bool = False,
+        multi_query: bool = False
     ) -> Dict:
         """
         Execute a full RAG query: Guardrails (Input) → Retrieve → Generate → Guardrails (Output).
@@ -55,7 +56,7 @@ class RAGEngine:
             }
 
         # 2. Retrieve
-        docs = await search(question, top_k=top_k, role_filter=role, use_hyde=use_hyde)
+        docs = await search(question, top_k=top_k, role_filter=role, use_hyde=use_hyde, multi_query=multi_query)
         
         # 2. Check if anything was found
         if not docs or (len(docs) > 0 and docs[0].metadata.get("score", 0) < 0.01):
@@ -87,7 +88,8 @@ class RAGEngine:
         question: str, 
         role: str = "general", 
         top_k: int = 5,
-        use_hyde: bool = False
+        use_hyde: bool = False,
+        multi_query: bool = False
     ):
         """
         Execute a streaming RAG query.
@@ -100,7 +102,7 @@ class RAGEngine:
             return
 
         # 2. Retrieve
-        docs = await search(question, top_k=top_k, role_filter=role, use_hyde=use_hyde)
+        docs = await search(question, top_k=top_k, role_filter=role, use_hyde=use_hyde, multi_query=multi_query)
         
         # 3. Check threshold
         if not docs or (len(docs) > 0 and docs[0].metadata.get("score", 0) < 0.01):

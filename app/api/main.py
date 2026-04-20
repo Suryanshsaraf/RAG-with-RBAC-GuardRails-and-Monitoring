@@ -53,6 +53,7 @@ class QueryRequest(BaseModel):
     question: str
     top_k: int = 5
     use_hyde: bool = False
+    multi_query: bool = False
 
 class Token(BaseModel):
     access_token: str
@@ -110,7 +111,8 @@ async def process_query(
             question=request.question,
             role=current_user.role,
             top_k=request.top_k,
-            use_hyde=request.use_hyde
+            use_hyde=request.use_hyde,
+            multi_query=request.multi_query
         )
         
         # Format sources for response
@@ -142,7 +144,8 @@ async def process_query_stream(
             question=request.question,
             role=current_user.role,
             top_k=request.top_k,
-            use_hyde=request.use_hyde
+            use_hyde=request.use_hyde,
+            multi_query=request.multi_query
         ),
         media_type="application/x-ndjson"
     )
