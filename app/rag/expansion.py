@@ -4,6 +4,7 @@ Query Expansion module.
 Implements HyDE (Hypothetical Document Embeddings) and other expansion techniques.
 """
 
+from typing import List
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from app.rag.generator import get_llm
