@@ -5,6 +5,7 @@ Main entry point for the API, handling queries and system status.
 """
 
 from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import List, Dict, Optional
@@ -123,6 +124,25 @@ async def process_query(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/query/stream")
+async def process_query_stream(
+    request: QueryRequest,
+    current_user: UserSession = Depends(get_current_user),
+    engine: RAGEngine = Depends(get_rag_engine)
+):
+    """
+    Process a streaming RAG query.
+    Requires a valid JWT token.
+    """
+    return StreamingResponse(
+        engine.stream_query(
+            question=request.question,
+            role=current_user.role,
+            top_k=request.top_k
+        ),
+        media_type="application/x-ndjson"
+    )
 
 if __name__ == "__main__":
     import uvicorn

@@ -104,40 +104,47 @@ if prompt := st.chat_input("Ask a question about company policies, finances, or 
     # Get response from API
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
+        full_response = ""
+        sources = []
+        guardrail = False
+        
         with st.spinner("Thinking..."):
             try:
                 headers = {"Authorization": f"Bearer {st.session_state.token}"}
-                response = requests.post(
-                    f"{API_URL}/query",
+                # Use streaming endpoint
+                with requests.post(
+                    f"{API_URL}/query/stream",
                     headers=headers,
-                    json={"question": prompt, "top_k": top_k}
-                )
+                    json={"question": prompt, "top_k": top_k},
+                    stream=True
+                ) as r:
+                    for line in r.iter_lines():
+                        if line:
+                            chunk = json.loads(line.decode("utf-8"))
+                            if "answer" in chunk:
+                                full_response += chunk["answer"]
+                                message_placeholder.markdown(full_response + "▌")
+                            if "sources" in chunk:
+                                sources = chunk["sources"]
+                            if chunk.get("guardrail_triggered"):
+                                guardrail = True
                 
-                if response.status_code == 200:
-                    data = response.json()
-                    answer = data["answer"]
-                    sources = data["sources"]
-                    guardrail = data["guardrail_triggered"]
-                    
-                    if guardrail:
-                        st.warning("⚠️ Guardrail Triggered")
-                    
-                    message_placeholder.markdown(answer)
-                    
-                    # Store assistant response
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": answer,
-                        "sources": sources
-                    })
-                    
-                    if sources:
-                        with st.expander("View Sources"):
-                            for i, src in enumerate(sources):
-                                st.write(f"**Source {i+1}:** {src['metadata'].get('source', 'Unknown')}")
-                                st.caption(src["content"][:200] + "...")
-                else:
-                    error_detail = response.json().get("detail", "Unknown error")
-                    st.error(f"API Error: {error_detail}")
+                message_placeholder.markdown(full_response)
+                
+                if guardrail:
+                    st.warning("⚠️ Guardrail Triggered")
+                
+                # Store assistant response
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": full_response,
+                    "sources": sources
+                })
+                
+                if sources:
+                    with st.expander("View Sources"):
+                        for i, src in enumerate(sources):
+                            st.write(f"**Source {i+1}:** {src['metadata'].get('source', 'Unknown')}")
+                            st.caption(src["content"][:200] + "...")
             except Exception as e:
                 st.error(f"Error: {e}")

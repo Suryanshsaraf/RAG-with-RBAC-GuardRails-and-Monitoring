@@ -4,7 +4,8 @@ RAG Engine.
 Orchestrates retrieval and generation.
 """
 
-from typing import Dict, List, Optional, Tuple
+import json
+from typing import Dict, List, Optional, Tuple, Any
 
 from langchain_core.documents import Document
 
@@ -79,6 +80,45 @@ class RAGEngine:
             "source_documents": docs,
             "guardrail_triggered": False
         }
+
+    async def stream_query(
+        self, 
+        question: str, 
+        role: str = "general", 
+        top_k: int = 5
+    ):
+        """
+        Execute a streaming RAG query.
+        Yields answer chunks as JSON strings.
+        """
+        # 1. Input Guardrails
+        violation = await self.guardrails.check_input(question)
+        if violation:
+            yield json.dumps({"answer": violation, "guardrail_triggered": True}) + "\n"
+            return
+
+        # 2. Retrieve
+        docs = search(question, top_k=top_k, role_filter=role)
+        
+        # 3. Check threshold
+        if not docs or (len(docs) > 0 and docs[0].metadata.get("score", 0) < 0.01):
+            yield json.dumps({
+                "answer": "I don't know the answer to that based on the available documents.",
+                "guardrail_triggered": False
+            }) + "\n"
+            return
+        
+        # 4. Stream Generate
+        context = format_docs(docs)
+        async for chunk in self.chain.astream({"context": context, "question": question}):
+            yield json.dumps({"answer": chunk, "guardrail_triggered": False}) + "\n"
+        
+        # 5. Final yield with sources
+        sources = [
+            {"content": doc.page_content, "metadata": doc.metadata}
+            for doc in docs
+        ]
+        yield json.dumps({"sources": sources}) + "\n"
 
 
 def get_rag_engine() -> RAGEngine:
