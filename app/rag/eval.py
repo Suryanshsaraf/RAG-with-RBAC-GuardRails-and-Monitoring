@@ -29,7 +29,7 @@ async def evaluate_rag(test_queries: list):
     for item in test_queries:
         # Execute RAG
         # Note: We use 'admin' role for evaluation to see all docs
-        response = await engine.query(item["question"], role="admin")
+        response = await engine.query(item["question"], role="admin", use_hyde=True)
         
         results.append({
             "question": item["question"],

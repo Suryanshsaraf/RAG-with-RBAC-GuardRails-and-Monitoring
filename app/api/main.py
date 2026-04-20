@@ -52,6 +52,7 @@ FAKE_USERS_DB = {
 class QueryRequest(BaseModel):
     question: str
     top_k: int = 5
+    use_hyde: bool = False
 
 class Token(BaseModel):
     access_token: str
@@ -108,7 +109,8 @@ async def process_query(
         result = await engine.query(
             question=request.question,
             role=current_user.role,
-            top_k=request.top_k
+            top_k=request.top_k,
+            use_hyde=request.use_hyde
         )
         
         # Format sources for response
@@ -139,7 +141,8 @@ async def process_query_stream(
         engine.stream_query(
             question=request.question,
             role=current_user.role,
-            top_k=request.top_k
+            top_k=request.top_k,
+            use_hyde=request.use_hyde
         ),
         media_type="application/x-ndjson"
     )

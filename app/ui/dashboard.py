@@ -75,6 +75,7 @@ with st.sidebar:
     st.divider()
     st.subheader("Settings")
     top_k = st.slider("Top K Chunks", 1, 10, 5)
+    use_hyde = st.toggle("Use HyDE Expansion", value=False, help="Generate hypothetical document to improve retrieval.")
 
 # --- Main Interface ---
 st.title("🏢 Enterprise Knowledge Base")
@@ -115,7 +116,7 @@ if prompt := st.chat_input("Ask a question about company policies, finances, or 
                 with requests.post(
                     f"{API_URL}/query/stream",
                     headers=headers,
-                    json={"question": prompt, "top_k": top_k},
+                    json={"question": prompt, "top_k": top_k, "use_hyde": use_hyde},
                     stream=True
                 ) as r:
                     for line in r.iter_lines():
