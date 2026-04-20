@@ -19,3 +19,4 @@ ragas
 pytest
 requests
 fastembed
+nemoguardrails
