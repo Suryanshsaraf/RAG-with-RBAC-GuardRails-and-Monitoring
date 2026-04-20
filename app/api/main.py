@@ -4,16 +4,20 @@ FastAPI Backend for EnterpriseRAG.
 Main entry point for the API, handling queries and system status.
 """
 
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+import shutil
+import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
 
 from app.rag.engine import get_rag_engine, RAGEngine
+from app.ingestion.pipeline import run_ingestion
 from app.core.config import settings
 from app.auth.handler import create_access_token, verify_password, hash_password
 from app.auth.deps import get_current_user, UserSession
@@ -152,6 +156,38 @@ async def process_query_stream(
         ),
         media_type="application/x-ndjson"
     )
+    
+
+@app.post("/upload")
+async def upload_document(
+    file: UploadFile = File(...),
+    current_user: UserSession = Depends(get_current_user)
+):
+    """
+    Upload a document to the knowledge base and trigger ingestion.
+    Files are saved to data/general by default.
+    """
+    # 1. Create upload dir if not exists
+    upload_dir = Path("data/general")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    file_path = upload_dir / file.filename
+    
+    # 2. Save file
+    try:
+        with file_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+    
+    # 3. Trigger Ingestion (Async)
+    try:
+        # We run the ingestion for the new file
+        await run_ingestion(data_dir="data", full=False)
+        return {"filename": file.filename, "status": "Uploaded and indexed successfully"}
+    except Exception as e:
+        return {"filename": file.filename, "status": "Uploaded but indexing failed", "error": str(e)}
+
 
 if __name__ == "__main__":
     import uvicorn
