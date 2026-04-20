@@ -6,3 +6,4 @@ EnterpriseRAG_PRD.docx
 __pycache__/
 *.pyc
 qdrant_storage/
+doc_versions.json
