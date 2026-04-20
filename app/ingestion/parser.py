@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import List
 
 from langchain_core.documents import Document
+from langchain_community.document_loaders import PyPDFLoader
 
 
 def _extract_role_from_path(file_path: str) -> str:
@@ -55,6 +56,25 @@ def parse_markdown(file_path: str) -> List[Document]:
     }
 
     return [Document(page_content=content, metadata=metadata)]
+
+
+def parse_pdf(file_path: str) -> List[Document]:
+    """
+    Parse a PDF file using LangChain's PyPDFLoader.
+    """
+    loader = PyPDFLoader(file_path)
+    pages = loader.load()
+
+    role = _extract_role_from_path(file_path)
+    for page in pages:
+        page.metadata.update({
+            "source": os.path.basename(file_path),
+            "source_path": file_path,
+            "role": role,
+            "file_type": "pdf",
+        })
+
+    return pages
 
 
 def parse_csv(file_path: str) -> List[Document]:
@@ -140,6 +160,8 @@ def parse_document(file_path: str) -> List[Document]:
         return parse_markdown(file_path)
     elif ext == ".csv":
         return parse_csv(file_path)
+    elif ext == ".pdf":
+        return parse_pdf(file_path)
     else:
         raise ValueError(f"Unsupported file type: {ext}  (file: {file_path})")
 
@@ -167,7 +189,7 @@ def load_all_documents(data_dir: str = "data") -> List[Document]:
         All parsed documents across every subdirectory.
     """
     all_docs: List[Document] = []
-    supported_extensions = {".md", ".csv"}
+    supported_extensions = {".md", ".csv", ".pdf"}
 
     for root, _dirs, files in os.walk(data_dir):
         for fname in sorted(files):
