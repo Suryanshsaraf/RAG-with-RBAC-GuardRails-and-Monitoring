@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Zap, Search, BarChart3, ArrowRight } from 'lucide-react';
-import { cn } from '../lib/utils';
 
 interface LandingPageProps {
   onGetStarted: () => void;

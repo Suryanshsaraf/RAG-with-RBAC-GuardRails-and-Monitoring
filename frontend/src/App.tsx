@@ -5,6 +5,7 @@ import { Chat } from './components/Chat';
 import { LandingPage } from './components/LandingPage';
 import { jwtDecode } from 'jwt-decode';
 import { cn } from './lib/utils';
+import { Menu, UploadCloud, FileText, BarChart3, Zap, Shield, ArrowRight } from 'lucide-react';
 
 interface DecodedToken {
   sub: string;

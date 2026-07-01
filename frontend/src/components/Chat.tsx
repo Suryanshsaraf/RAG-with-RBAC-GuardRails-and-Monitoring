@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { apiService, type QueryResponse } from '../api/services';
-import { Send, Bot, User, ShieldAlert, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, Bot, User, ShieldAlert, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
